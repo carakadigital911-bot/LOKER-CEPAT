@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loker Cepat - Admin Dashboard v3</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="header">
+        <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+        <h1>🚀 Loker Cepat</h1>
+        <p>Update Lowongan Kerja Tiap Hari</p>
+    </div>
+
+    <div class="stats-bar" id="statsBar">📢 Memuat data...</div>
+
+    <div class="container">
+        <!-- DASHBOARD ADMIN -->
+        <div class="admin-panel" id="adminPanel">
+            <h3>🔐 Admin Dashboard v3</h3>
+            <div class="admin-tabs">
+                <button class="tab-btn active" onclick="showTab('tambah',this)">➕ Kelola Loker</button>
+                <button class="tab-btn" onclick="showTab('statistik',this)">📊 Statistik</button>
+                <button class="tab-btn" onclick="showTab('import',this)">📁 Import/Sheets</button>
+                <button class="tab-btn" onclick="showTab('log',this)">📝 Log Admin</button>
+                <button class="btn-logout" onclick="logoutAdmin()">Logout</button>
+            </div>
+
+            <!-- TAB KELOLA LOKER -->
+            <div class="tab-content" id="tab-tambah">
+                <div class="admin-form">
+                    <input type="hidden" id="editId">
+                    <input type="text" id="inputJudul" placeholder="Nama Pekerjaan: Admin Toko">
+                    <select id="inputKota">
+                        <option value="">Pilih Lokasi</option>
+                        <option>Jakarta Pusat</option><option>Jakarta Barat</option><option>Jakarta Selatan</option>
+                        <option>Jakarta Timur</option><option>Jakarta Utara</option><option>Bogor</option>
+                        <option>Depok</option><option>Tangerang</option><option>Tangerang Selatan</option><option>Bekasi</option>
+                        <option>Remote</option>
+                    </select>
+                    <input type="text" id="inputGaji" placeholder="Gaji: Rp 3.5 - 4 Juta">
+                    <input type="number" id="inputGajiSort" placeholder="Gaji angka: 3500000">
+                    <select id="inputJenjang"><option value="">Jenjang</option><option>SMA/SMK</option><option>D3</option><option>S1</option></select>
+                    <select id="inputTipe"><option value="">Tipe</option><option>Full Time</option><option>Part Time</option><option>Freelance</option><option>Internship</option></select>
+                    <input type="text" id="inputWA" placeholder="Link WA: https://wa.me/62812...">
+                    <input type="email" id="inputEmail" placeholder="Email HRD: hrd@pt.com (opsional)">
+                    <textarea id="inputDesc" placeholder="Deskripsi Pekerjaan:&#10;&#10;Syarat:&#10;- Pria/Wanita&#10;- Max 30 tahun&#10;&#10;Benefit:&#10;- BPJS&#10;- Bonus"></textarea>
+                    <button id="btnSubmit" onclick="simpanLoker()">+ Simpan Loker</button>
+                    <button id="btnCancel" onclick="batalEdit()" style="display:none;background:#6b7280">Batal Edit</button>
+                </div>
+            </div>
+
+            <!-- TAB STATISTIK -->
+            <div class="tab-content" id="tab-statistik" style="display:none">
+                <div class="stat-grid">
+                    <div class="stat-card"><div class="stat-number" id="totalLoker">0</div><div class="stat-label">Total Loker</div></div>
+                    <div class="stat-card"><div class="stat-number" id="totalKlik">0</div><div class="stat-label">Total Klik WA</div></div>
+                    <div class="stat-card"><div class="stat-number" id="totalView">0</div><div class="stat-label">Traffic Hari Ini</div></div>
+                    <div class="stat-card"><div class="stat-number" id="totalLamar">0</div><div class="stat-label">Form Lamar Masuk</div></div>
+                </div>
+                <h4 style="margin:15px 0 10px">📈 Traffic 7 Hari Terakhir</h4>
+                <canvas id="trafficChart" style="max-height:200px;margin-bottom:20px"></canvas>
+                <h4 style="margin:15px 0 10px">🔥 Loker Paling Diklik</h4>
+                <div id="topLokerList"></div>
+                <button onclick="exportExcel()" style="margin-top:15px">📊 Export Data ke Excel</button>
+            </div>
+
+            <!-- TAB IMPORT + GOOGLE SHEETS -->
+            <div class="tab-content" id="tab-import" style="display:none">
+                <h4>📁 Import dari Excel</h4>
+                <p style="margin-bottom:10px;font-size:14px">Kolom: <b>Nama Pekerjaan | Deskripsi Pekerjaan | Gaji | Lokasi | WA | Email</b></p>
+                <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" style="margin-bottom:10px">
+                <button onclick="importExcel()">🚀 Import Sekarang</button>
+                <a href="#" onclick="downloadTemplate()" style="font-size:12px;margin-left:10px">Download Template</a>
+                <div id="importLog" style="margin-top:10px;font-size:13px"></div>
+
+                <h4 style="margin:20px 0 10px">🔄 Sinkron Google Sheets</h4>
+                <input type="text" id="sheetsUrl" placeholder="Paste URL Google Sheets CSV di sini" style="width:100%;margin-bottom:10px">
+                <button onclick="syncSheets()">🔄 Sync Sekarang</button>
+                <p style="font-size:12px;color:var(--text-secondary);margin-top:5px">File → Share → Publish to web → CSV → Copy link</p>
+            </div>
+
+            <!-- TAB LOG ADMIN -->
+            <div class="tab-content" id="tab-log" style="display:none">
+                <h4>📝 Log Aktivitas Admin</h4>
+                <div id="logList" style="max-height:300px;overflow-y:auto"></div>
+            </div>
+        </div>
+
+        <!-- BOX SEARCH -->
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Cari: Admin, Barista, Gaji 5jt..." onkeyup="renderLoker()">
+            <div class="filter-btns">
+                <button class="filter-btn active" onclick="setFilter('kota','all',this)">Semua Kota</button>
+                <button class="filter-btn" onclick="setFilter('kota','Jakarta Barat',this)">Jakbar</button>
+                <button class="filter-btn" onclick="setFilter('kota','Bekasi',this)">Bekasi</button>
+                <button class="filter-btn" onclick="setFilter('wa','WA',this)">✅ Ada WA</button>
+            </div>
+        </div>
+
+        <!-- LIST LOKER -->
+        <div id="lokerList"></div>
+        <div id="emptyMsg" class="empty" style="display:none">Belum ada loker.</div>
+    </div>
+
+    <!-- MODAL FORM LAMAR -->
+    <div class="modal" id="modalLamar">
+        <div class="modal-content">
+            <span class="close" onclick="tutupModal()">&times;</span>
+            <h3 id="modalJudul">Lamar Pekerjaan</h3>
+            <div class="lamar-form">
+                <input type="text" id="namaLamar" placeholder="Nama Lengkap">
+                <input type="text" id="waLamar" placeholder="No. WhatsApp: 0812...">
+                <input type="email" id="emailLamar" placeholder="Email">
+                <textarea id="pesanLamar" placeholder="Pesan/Cover Letter singkat..."></textarea>
+                <button onclick="kirimLamaran()">📨 Kirim Lamaran</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        © 2026 LokerCepat
+        <div class="secret-admin" onclick="toggleAdmin()">•</div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
