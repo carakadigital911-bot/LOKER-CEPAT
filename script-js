@@ -1,0 +1,59 @@
+// GANTI URL INI PAKE LINK GOOGLE SHEETS LO NANTI
+// Format: https://docs.google.com/spreadsheets/d/ID_SHEETS_LO/gviz/tq?tqx=out:json
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1xxx/gviz/tq?tqx=out:json';
+
+async function loadLoker() {
+  const container = document.getElementById('loker-list');
+  container.innerHTML = '<p class="loading">Loading loker...</p>';
+
+  try {
+    const res = await fetch(SHEET_URL);
+    const text = await res.text();
+
+    // Google Sheets ngasih data aneh, harus dibersihin dulu
+    const json = JSON.parse(text.substring(47).slice(0, -2));
+    const rows = json.table.rows;
+
+    container.innerHTML = '';
+
+    //.reverse() biar loker terbaru di atas
+    rows.reverse().forEach(row => {
+      const c = row.c;
+
+      // Skip kalo baris kosong
+      if (!c[0] ||!c[0].v) return;
+
+      const posisi = c[0]?.v || 'Tidak ada posisi';
+      const perusahaan = c[1]?.v || 'Perusahaan';
+      const lokasi = c[2]?.v || 'Jakarta';
+      const gaji = c[3]?.v || 'Negotiable';
+      const jenis = c[4]?.v || 'Full Time';
+      const deskripsi = c[5]?.v || '-';
+      const kontak = c[6]?.v || '';
+
+      const card = `
+        <div class="loker-card">
+          <span class="badge">${jenis}</span>
+          <span class="badge">${lokasi}</span>
+          <h2>${posisi}</h2>
+          <p><strong>Perusahaan:</strong> ${perusahaan}</p>
+          <p><strong>Gaji:</strong> ${gaji}</p>
+          <p><strong>Deskripsi:</strong> ${deskripsi}</p>
+          <p><strong>Lamar:</strong> <a href="https://wa.me/${kontak}" target="_blank">Chat WA ${kontak}</a></p>
+        </div>
+      `;
+      container.innerHTML += card;
+    });
+
+    if (container.innerHTML === '') {
+      container.innerHTML = '<p class="loading">Belum ada loker. Cek lagi besok ya!</p>';
+    }
+
+  } catch (err) {
+    container.innerHTML = '<p class="loading">Gagal load data. Coba refresh halaman.</p>';
+    console.error('Error:', err);
+  }
+}
+
+// Jalanin pas halaman kebuka
+loadLoker();
